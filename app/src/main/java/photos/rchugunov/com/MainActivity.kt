@@ -1,6 +1,7 @@
 package photos.rchugunov.com
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.ApiException
@@ -34,16 +35,15 @@ class MainActivity : AppCompatActivity() {
 
         try {
             PhotosLibraryClient.initialize(settings).use { photosLibraryClient ->
-
                 // Create a new Album  with at title
-                val album = photosLibraryClient.createAlbum("My Album")
-
-                // Get some properties from the album, such as its ID and product URL
-                val id: String = album.getId()
-                val url: String = album.getProductUrl()
+                photosLibraryClient.listAlbums().iterateAll().forEach { album ->
+                    Log.d(TAG, "My albums ${album.title}")
+                }
             }
         } catch (e: ApiException) {
-            // Error during album creation
+            Log.e(TAG, e.message, e)
         }
     }
 }
+
+private const val TAG = "MainActivity"
