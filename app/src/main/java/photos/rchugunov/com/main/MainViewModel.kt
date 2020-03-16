@@ -1,22 +1,36 @@
-package photos.rchugunov.com
+package photos.rchugunov.com.main
 
-import android.os.Bundle
+import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.ApiException
 import com.google.auth.oauth2.AccessToken
 import com.google.auth.oauth2.UserCredentials
 import com.google.photos.library.v1.PhotosLibraryClient
 import com.google.photos.library.v1.PhotosLibrarySettings
+import com.google.photos.types.proto.Album
+import photos.rchugunov.com.BuildConfig
+import photos.rchugunov.com.TokenProvider
 
+class MainViewModel : ViewModel() {
 
-class MainActivity : AppCompatActivity() {
+    private lateinit var tokenProvider: TokenProvider
+    private val albumsLiveData: MutableLiveData<List<Album>> = MutableLiveData()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    fun initialize(activity: AppCompatActivity) {
 
+        tokenProvider =
+            TokenProvider(
+                activity.getSharedPreferences(
+                    TokenProvider.AUTH_PREFS,
+                    Context.MODE_PRIVATE
+                )
+            )
+        val token = tokenProvider.getToken()
 
         // Set up the Photos Library Client that interacts with the API
         val settings = PhotosLibrarySettings.newBuilder()
@@ -26,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                         .setClientId(BuildConfig.GOOGLE_CLIENT_ID)
                         .setClientSecret(BuildConfig.GOOGLE_CLIENT_SECRET)
                         .setAccessToken(
-                            AccessToken((application as PhotosApp).accessToken, null)
+                            AccessToken(token, null)
                         )
                         .build()
                 )
@@ -34,16 +48,20 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         try {
+            val albumsList = mutableListOf<Album>()
             PhotosLibraryClient.initialize(settings).use { photosLibraryClient ->
                 // Create a new Album  with at title
-                photosLibraryClient.listAlbums().iterateAll().forEach { album ->
-                    Log.d(TAG, "My albums ${album.title}")
-                }
+                photosLibraryClient.listAlbums().iterateAll().forEach { albumsList.add(it) }
+                albumsLiveData.value = albumsList
             }
         } catch (e: ApiException) {
             Log.e(TAG, e.message, e)
         }
     }
-}
 
-private const val TAG = "MainActivity"
+    fun observeAlbums(): LiveData<List<Album>> = albumsLiveData
+
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+}

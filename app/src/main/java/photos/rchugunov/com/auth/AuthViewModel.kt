@@ -1,9 +1,12 @@
-package photos.rchugunov.com
+package photos.rchugunov.com.auth
 
+import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -13,23 +16,22 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Task
-import kotlinx.android.synthetic.main.activity_auth.*
 import okhttp3.*
-import okhttp3.FormBody
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import photos.rchugunov.com.BuildConfig
+import photos.rchugunov.com.TokenProvider
 
+class AuthViewModel : ViewModel() {
 
-class AuthActivity : AppCompatActivity() {
     private lateinit var apiClient: GoogleApiClient
     private lateinit var client: GoogleSignInClient
+    private lateinit var tokenProvider: TokenProvider
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_auth)
+    private val signInResultData = MutableLiveData<Unit>()
 
-
+    fun initialize(activity: AppCompatActivity) {
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         // Configure sign-in to request the user's ID, email address, and basic
@@ -41,57 +43,26 @@ class AuthActivity : AppCompatActivity() {
             .build()
 
         // Build a GoogleSignInClient with the options specified by gso.
-        client = GoogleSignIn.getClient(this, gso);
+        client = GoogleSignIn.getClient(activity, gso);
 
-        apiClient = GoogleApiClient.Builder(this)
-//            .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+        apiClient = GoogleApiClient.Builder(activity)
             .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
             .build()
 
-        buttonSignIn.setOnClickListener {
-            val signInIntent = client.signInIntent
-            startActivityForResult(signInIntent, RC_SIGN_IN)
-        }
+        tokenProvider =
+            TokenProvider(
+                activity.getSharedPreferences(
+                    TokenProvider.AUTH_PREFS,
+                    Context.MODE_PRIVATE
+                )
+            )
     }
 
-    override fun onStart() {
-        super.onStart()
+    fun observeSignInResult(): LiveData<Unit> = signInResultData
 
-        // Check for existing Google Sign In account, if the user is already signed in
-        // the GoogleSignInAccount will be non-null.
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        updateUI(account)
-    }
+    fun signInClient(): Intent = client.signInIntent
 
-    private fun updateUI(account: GoogleSignInAccount?) {
-        account?.serverAuthCode?.run {
-            getAccessToken(
-                authCode = this,
-                clientId = BuildConfig.GOOGLE_CLIENT_ID,
-                clientSecret = BuildConfig.GOOGLE_CLIENT_SECRET
-            ) { token ->
-                (application as PhotosApp).accessToken = token
-
-                val intent = Intent(this@AuthActivity, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            // The Task returned from this call is always completed, no need to attach
-            // a listener.
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            handleSignInResult(task)
-        }
-    }
-
-    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
+    fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java)
 
@@ -105,7 +76,21 @@ class AuthActivity : AppCompatActivity() {
         }
     }
 
-    fun getAccessToken(
+    private fun updateUI(account: GoogleSignInAccount?) {
+        account?.serverAuthCode?.run {
+            getAccessToken(
+                authCode = this,
+                clientId = BuildConfig.GOOGLE_CLIENT_ID,
+                clientSecret = BuildConfig.GOOGLE_CLIENT_SECRET
+            ) { token ->
+                tokenProvider.saveToken(token)
+                signInResultData.postValue(Unit)
+            }
+        }
+    }
+
+    @Suppress("SameParameterValue")
+    private fun getAccessToken(
         authCode: String,
         clientId: String,
         clientSecret: String,
@@ -142,8 +127,13 @@ class AuthActivity : AppCompatActivity() {
         })
     }
 
+    fun checkSignIn() {
+        if (tokenProvider.getToken() != null) {
+            signInResultData.value = Unit
+        }
+    }
+
     companion object {
-        private const val RC_SIGN_IN = 1
-        private const val TAG = "AuthActivity"
+        private const val TAG = "AuthViewModel"
     }
 }
