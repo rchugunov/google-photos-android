@@ -22,7 +22,6 @@ import com.google.photos.types.proto.Album
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import photos.rchugunov.com.BuildConfig
 import photos.rchugunov.com.TokenProvider
 
@@ -98,7 +97,6 @@ class MainViewModel : ViewModel() {
                     photosLibraryClient.listAlbums().iterateAll().forEach { albumsList.add(it) }
                     albumsList
                 }
-                .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { albums -> albumsLiveData.value = albums },

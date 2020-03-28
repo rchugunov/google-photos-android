@@ -11,12 +11,14 @@ import com.google.photos.types.proto.Album
 import kotlinx.android.synthetic.main.activity_main.*
 import photos.rchugunov.com.R
 import photos.rchugunov.com.ViewModelsFactory
+import photos.rchugunov.com.album.AlbumActivity
 import photos.rchugunov.com.auth.AuthActivity
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val adapter = AlbumsAdapter()
+    private val adapter = AlbumsAdapter(::openAlbumActivity)
+
     private lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +42,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
+    }
+
+    private fun openAlbumActivity(albumId: String) {
+        AlbumActivity.startActivity(this, albumId)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
