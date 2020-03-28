@@ -11,6 +11,10 @@ class TokenProvider(
         sharedPreferences.edit().putString(AUTH_TOKEN_KEY, token).apply()
     }
 
+    fun clear() {
+        sharedPreferences.edit().remove(AUTH_TOKEN_KEY).apply()
+    }
+
     companion object {
         const val AUTH_PREFS = "AUTH_PREFS"
         private const val AUTH_TOKEN_KEY = "AUTH_TOKEN_KEY"

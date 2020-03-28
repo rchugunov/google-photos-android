@@ -1,12 +1,17 @@
 package photos.rchugunov.com.main
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.photos.types.proto.Album
 import kotlinx.android.synthetic.main.activity_main.*
 import photos.rchugunov.com.R
 import photos.rchugunov.com.ViewModelsFactory
+import photos.rchugunov.com.auth.AuthActivity
 
 
 class MainActivity : AppCompatActivity() {
@@ -18,10 +23,31 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setSupportActionBar(toolbar)
+
         recyclerView.adapter = adapter
 
         viewModel = ViewModelProvider(this, ViewModelsFactory).get(MainViewModel::class.java)
         viewModel.initialize(this)
-        viewModel.observeAlbums().observe(this, Observer { adapter.albumsList = it })
+        viewModel.observeAlbums()
+            .observe(this, Observer { albums: List<Album> -> adapter.albumsList = albums })
+        viewModel.observeLogout().observe(this, Observer {
+            finish()
+            startActivity(Intent(applicationContext, AuthActivity::class.java))
+        })
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.btnLogout -> {
+                viewModel.logout()
+            }
+        }
+        return true
     }
 }

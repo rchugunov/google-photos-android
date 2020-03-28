@@ -1,6 +1,4 @@
 <resources>
     <string name="app_name">Google photos</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="logout">Logout</string>
 </resources>
