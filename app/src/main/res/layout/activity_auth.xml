@@ -6,11 +6,13 @@
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/buttonSignIn"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.75"
+        app:layout_constraintVertical_bias="0.9"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="80dp" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

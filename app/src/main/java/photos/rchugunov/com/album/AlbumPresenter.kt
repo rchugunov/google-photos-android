@@ -34,4 +34,4 @@ class AlbumPresenter(
     }
 }
 
-private val TAG = "AlbumPresenter"
+private const val TAG = "AlbumPresenter"
