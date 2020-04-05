@@ -2,30 +2,32 @@ package photos.rchugunov.com.auth
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import kotlinx.android.synthetic.main.activity_auth.*
+import photos.rchugunov.com.BaseActivity
 import photos.rchugunov.com.R
-import photos.rchugunov.com.ViewModelsFactory
 import photos.rchugunov.com.main.MainActivity
 
 
-class AuthActivity : AppCompatActivity() {
+class AuthActivity : BaseActivity() {
 
-    private lateinit var viewModel: AuthViewModel
+    private val viewModel by lazy {
+        ViewModelProvider(
+            this,
+            app.viewModelsFactory
+        ).get(AuthViewModel::class.java)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
 
-        viewModel = ViewModelProvider(this, ViewModelsFactory).get(AuthViewModel::class.java)
-        viewModel.initialize(this)
         viewModel.observeSignInResult().observe(this, Observer { startMainActivity() })
 
         buttonSignIn.setOnClickListener {
-            val signInIntent = viewModel.signInClient()
+            val signInIntent = signInIntent()
             startActivityForResult(signInIntent, RC_SIGN_IN)
         }
     }

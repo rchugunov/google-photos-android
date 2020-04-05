@@ -4,22 +4,26 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.photos.types.proto.Album
 import kotlinx.android.synthetic.main.activity_main.*
+import photos.rchugunov.com.BaseActivity
 import photos.rchugunov.com.R
-import photos.rchugunov.com.ViewModelsFactory
 import photos.rchugunov.com.album.AlbumActivity
 import photos.rchugunov.com.auth.AuthActivity
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private val adapter = AlbumsAdapter(::openAlbumActivity)
 
-    private lateinit var viewModel: MainViewModel
+    private val viewModel by lazy {
+        ViewModelProvider(
+            this,
+            app.viewModelsFactory
+        ).get(MainViewModel::class.java)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,14 +32,17 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         recyclerView.adapter = adapter
-
-        viewModel = ViewModelProvider(this, ViewModelsFactory).get(MainViewModel::class.java)
-        viewModel.initialize(this)
+        viewModel.loadAlbums()
         viewModel.observeAlbums()
             .observe(this, Observer { albums: List<Album> -> adapter.albumsList = albums })
         viewModel.observeLogout().observe(this, Observer {
-            finish()
-            startActivity(Intent(applicationContext, AuthActivity::class.java))
+            client.revokeAccess().continueWithTask {
+                client.signOut()
+            }.addOnCompleteListener {
+                finish()
+                startActivity(Intent(applicationContext, AuthActivity::class.java))
+            }
+
         })
     }
 

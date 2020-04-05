@@ -6,6 +6,11 @@ apply plugin: 'com.google.gms.google-services'
 // Apply the Crashlytics Gradle plugin
 apply plugin: 'com.google.firebase.crashlytics'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def google_secret_id = properties.getProperty('google_secret_id')
+def google_secret_key = properties.getProperty('google_secret_key')
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -17,8 +22,8 @@ android {
         versionCode 1
         versionName "1.0"
 
-        buildConfigField "String", "GOOGLE_CLIENT_ID", '\"303542639985-g8e56tmfuvgqkcc9sn4gnblcn614isbj.apps.googleusercontent.com\"'
-        buildConfigField "String", "GOOGLE_CLIENT_SECRET", '\"23innpu6gpzgW0kSo0PPQPnw\"'
+        buildConfigField "String", "GOOGLE_CLIENT_ID", "\"${google_secret_id}\""
+        buildConfigField "String", "GOOGLE_CLIENT_SECRET", "\"${google_secret_key}\""
     }
 
     buildTypes {
